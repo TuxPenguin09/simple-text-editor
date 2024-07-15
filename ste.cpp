@@ -20,30 +20,66 @@ public:
     int getSize() const {
         return size;
     }
+    void setContent(const string& newContent) {
+        content = newContent;
+    }
 };
 
-void initialize(char* argv[], vector<File>& files) {
+void initialize(char* argv[], vector<File>& files, bool editMode) {
     ifstream infile(argv[1]);
     if (!infile) {
         cerr << "Error opening file: " << argv[1] << endl;
         return;
     }
-    
-    string filename;
-    while (infile >> filename) {
-        files.emplace_back(filename); 
+
+    string line;
+    while (getline(infile, line)) {
+        files.emplace_back(line);
     }
     infile.close();
+
+    if (editMode && !files.empty()) {
+        string newContent, inputLine;
+        int emptyLineCount = 0;
+        cout << "Enter new content for the first file (press enter twice to finish):" << endl;
+
+        while (true) {
+            getline(cin, inputLine);
+            if (inputLine.empty()) {
+                emptyLineCount++;
+                if (emptyLineCount == 2) {
+                    break;
+                }
+            } else {
+                emptyLineCount = 0; // reset if a non-empty line is entered
+            }
+            newContent += inputLine + "\n";
+        }
+
+        files[0].setContent(newContent);
+
+        ofstream outfile(argv[1], ios::out | ios::trunc);
+        if (!outfile) {
+            cerr << "Error opening file for writing: " << argv[1] << endl;
+            return;
+        }
+        for (const auto& file : files) {
+            outfile << file.contentrow();
+        }
+        outfile.close();
+    }
 }
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        cerr << "Usage: " << argv[0] << " <Filename>" << endl;
+        cerr << "Usage: " << argv[0] << " <Filename> [--edit]" << endl;
         return 1;
     }
 
+    bool editMode = (argc > 2 && string(argv[2]) == "--edit");
+
     vector<File> files;
-    initialize(argv, files);
+    initialize(argv, files, editMode);
 
     if (files.empty()) {
         cout << "No entries found in the file." << endl;
