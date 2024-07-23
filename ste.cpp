@@ -72,11 +72,24 @@ void initialize(char* argv[], vector<File>& files, bool editMode) {
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        cerr << "Usage: " << argv[0] << " <Filename> [--edit]" << endl;
+        cerr << "Usage: " << argv[0] << " <Filename>" << endl;
         return 1;
     }
 
-    bool editMode = (argc > 2 && string(argv[2]) == "--edit");
+    int choice = 0;
+    if (argc == 2) {
+        cout << "Enter 1 for read, 2 for edit: ";
+        cin >> choice;
+        if (choice != 1 && choice != 2) {
+            cerr << "Invalid choice. Use 1 for read, 2 for edit." << endl;
+            return 1;
+        }
+    } else {
+        cerr << "Usage: " << argv[0] << " <Filename>" << endl;
+        return 1;
+    }
+
+    bool editMode = (choice == 2);
 
     vector<File> files;
     initialize(argv, files, editMode);
