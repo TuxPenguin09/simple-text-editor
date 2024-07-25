@@ -8,27 +8,24 @@ using namespace std;
 class File {
 private:
     string content;
-    int size;
 public:
-    File(string content, int size = 0) {
-        this->content = content;
-        this->size = size;
-    }
+    File(string content = "") : content(content) {}
     string contentrow() const {
         return content;
-    }
-    int getSize() const {
-        return size;
     }
     void setContent(const string& newContent) {
         content = newContent;
     }
 };
 
-void initialize(char* argv[], vector<File>& files, bool editMode) {
-    ifstream infile(argv[1]);
+void initialize(const string& filename, vector<File>& files, bool editMode) {
+    ifstream infile(filename);
     if (!infile) {
-        cerr << "Error opening file: " << argv[1] << endl;
+        cerr << "Error opening file: " << filename << endl;
+        if (editMode) {
+            cout << "Creating a new file: " << filename << endl;
+            files.emplace_back("");
+        }
         return;
     }
 
@@ -38,11 +35,12 @@ void initialize(char* argv[], vector<File>& files, bool editMode) {
     }
     infile.close();
 
-    if (editMode && !files.empty()) {
+    if (editMode) {
         string newContent, inputLine;
         int emptyLineCount = 0;
         cout << "Enter new content for the first file (press enter twice to finish):" << endl;
 
+        cin.ignore();
         while (true) {
             getline(cin, inputLine);
             if (inputLine.empty()) {
@@ -51,16 +49,20 @@ void initialize(char* argv[], vector<File>& files, bool editMode) {
                     break;
                 }
             } else {
-                emptyLineCount = 0; // reset if a non-empty line is entered
+                emptyLineCount = 0;
             }
             newContent += inputLine + "\n";
         }
 
-        files[0].setContent(newContent);
+        if (!files.empty()) {
+            files[0].setContent(newContent);
+        } else {
+            files.emplace_back(newContent);
+        }
 
-        ofstream outfile(argv[1], ios::out | ios::trunc);
+        ofstream outfile(filename, ios::out | ios::trunc);
         if (!outfile) {
-            cerr << "Error opening file for writing: " << argv[1] << endl;
+            cerr << "Error opening file for writing: " << filename << endl;
             return;
         }
         for (const auto& file : files) {
@@ -76,25 +78,22 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    string filename = argv[1];
     int choice = 0;
-    if (argc == 2) {
-        cout << "Enter 1 for read, 2 for edit: ";
-        cin >> choice;
-        if (choice != 1 && choice != 2) {
-            cerr << "Invalid choice. Use 1 for read, 2 for edit." << endl;
-            return 1;
-        }
-    } else {
-        cerr << "Usage: " << argv[0] << " <Filename>" << endl;
+    
+    cout << "Enter 1 for read, 2 for edit: ";
+    cin >> choice;
+    if (choice != 1 && choice != 2) {
+        cerr << "Invalid choice. Use 1 for read, 2 for edit." << endl;
         return 1;
     }
 
     bool editMode = (choice == 2);
 
     vector<File> files;
-    initialize(argv, files, editMode);
+    initialize(filename, files, editMode);
 
-    if (files.empty()) {
+    if (files.empty() && !editMode) {
         cout << "No entries found in the file." << endl;
     } else {
         for (const auto& file : files) {
